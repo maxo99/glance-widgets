@@ -72,38 +72,99 @@
       {{ if gt (len ($away.Array "records")) 0 }}{{ $awayRec = (index ($away.Array "records") 0).String "summary" }}{{ end }}
       {{ $homeRec := "" }}
       {{ if gt (len ($home.Array "records")) 0 }}{{ $homeRec = (index ($home.Array "records") 0).String "summary" }}{{ end }}
+      
+      {{ $awayScheduleLink := "" }}
+      {{ range $away.Array "team.links" }}
+        {{ if eq (.String "text") "Schedule" }}
+          {{ $awayScheduleLink = .String "href" }}
+        {{ end }}
+      {{ end }}
+      
+      {{ $homeScheduleLink := "" }}
+      {{ range $home.Array "team.links" }}
+        {{ if eq (.String "text") "Schedule" }}
+          {{ $homeScheduleLink = .String "href" }}
+        {{ end }}
+      {{ end }}
+      
+      {{ $gameLink := "" }}
+      {{ range .Array "links" }}
+        {{ $isGameLink := false }}
+        {{ range .Array "rel" }}
+          {{ if eq (printf "%v" .) "summary" }}
+            {{ $isGameLink = true }}
+          {{ end }}
+        {{ end }}
+        {{ if $isGameLink }}
+          {{ $gameLink = .String "href" }}
+        {{ end }}
+      {{ end }}
+
       <li style="display:flex;align-items:center;white-space:nowrap;gap:12px;padding:6px 0;border-bottom:1px solid var(--glance-divider);cursor:default" {{ if ne $state "STATUS_SCHEDULED" }}title="{{ $away.String "team.abbreviation" }} Box:{{ range $j,$ls := $away.Array "linescores" }}{{ if eq $j 0 }} Q1: {{ else if eq $j 1 }} Q2: {{ else if eq $j 2 }} Q3: {{ else if eq $j 3 }} Q4: {{ else }} OT: {{ end }}{{ $ls.String "value" }}{{ end }}&#10;{{ $home.String "team.abbreviation" }} Box:{{ range $j,$ls := $home.Array "linescores" }}{{ if eq $j 0 }} Q1: {{ else if eq $j 1 }} Q2: {{ else if eq $j 2 }} Q3: {{ else if eq $j 3 }} Q4: {{ else }} OT: {{ end }}{{ $ls.String "value" }}{{ end }}"{{ end }}>
         <span style="display:flex;align-items:center;width:90px;">
-          <img src="{{ $away.String "team.logo" }}" alt="{{ $away.String "team.abbreviation" }}" style="width:24px;height:24px;margin-right:4px;"/>
+          {{ if $awayScheduleLink }}
+            <a href="{{ $awayScheduleLink }}" target="_blank" style="text-decoration:none;color:inherit;">
+              <img src="{{ if $away.String "team.logo" }}{{ $away.String "team.logo" }}{{ else }}https://a.espncdn.com/i/teamlogos/leagues/500/nfl.png{{ end }}" alt="{{ $away.String "team.abbreviation" }}" style="width:24px;height:24px;margin-right:4px;cursor:pointer;"/>
+            </a>
+          {{ else }}
+            <img src="{{ if $away.String "team.logo" }}{{ $away.String "team.logo" }}{{ else }}https://a.espncdn.com/i/teamlogos/leagues/500/nfl.png{{ end }}" alt="{{ $away.String "team.abbreviation" }}" style="width:24px;height:24px;margin-right:4px;"/>
+          {{ end }}
           <span style="display:flex;flex-direction:column;margin-right:0;">
             <span style="font-weight:bold;">{{ $away.String "team.abbreviation" }}</span>
             {{ if $awayRec }}<span style="font-size:0.7em;color:var(--glance-muted-text)">({{ $awayRec }})</span>{{ end }}
           </span>
-          {{ if ne $state "STATUS_SCHEDULED" }}<span style="margin-left:0;font-size:1.1em;font-weight:500;">{{ $away.String "score" }}</span>{{ end }}
+          {{ if ne $state "STATUS_SCHEDULED" }}<span style="margin-left:1em;font-size:1.1em;font-weight:500;">{{ $away.String "score" }}</span>{{ end }}
         </span>
-        <span style="display:flex;flex-direction:column;align-items:center;min-width:90px;margin:0 8px;">
-          <span>
-            {{ if eq $state "STATUS_IN_PROGRESS" }}
-              {{ $period := .String "competitions.0.status.period" }}
-              <span style="font-size:0.85em;font-weight:500;">{{ if eq $period "1" }}1st{{ else if eq $period "2" }}2nd{{ else if eq $period "3" }}3rd{{ else if eq $period "4" }}4th{{ else }}OT{{ end }} {{ .String "competitions.0.status.displayClock" }}</span>
-            {{ else if eq $state "STATUS_SCHEDULED" }}
-              <span style="font-size:0.85em;">{{ .String "competitions.0.status.type.shortDetail" }}</span>
-            {{ else }}
-              <span style="font-size:0.85em;font-weight:500;">{{ .String "competitions.0.status.type.shortDetail" }}</span>
+        {{ if $gameLink }}
+          <a href="{{ $gameLink }}" target="_blank" style="text-decoration:none;color:inherit;">
+            <span style="display:flex;flex-direction:column;align-items:center;min-width:90px;margin:0 8px;cursor:pointer;">
+              <span>
+                {{ if eq $state "STATUS_IN_PROGRESS" }}
+                  {{ $period := .String "competitions.0.status.period" }}
+                  <span style="font-size:0.85em;font-weight:500;">{{ if eq $period "1" }}1st{{ else if eq $period "2" }}2nd{{ else if eq $period "3" }}3rd{{ else if eq $period "4" }}4th{{ else }}OT{{ end }} {{ .String "competitions.0.status.displayClock" }}</span>
+                {{ else if eq $state "STATUS_SCHEDULED" }}
+                  <span style="font-size:0.85em;">{{ .String "competitions.0.status.type.shortDetail" }}</span>
+                {{ else }}
+                  <span style="font-size:0.85em;font-weight:500;">{{ .String "competitions.0.status.type.shortDetail" }}</span>
+                {{ end }}
+              </span>
+
+              {{ if .Exists "competitions.0.series" }}
+                <span style="font-size:0.7em;color:var(--glance-accent-color);margin-top:5px;">{{ .String "competitions.0.series.summary" }}</span>
+              {{ end }}
+            </span>
+          </a>
+        {{ else }}
+          <span style="display:flex;flex-direction:column;align-items:center;min-width:90px;margin:0 8px;">
+            <span>
+              {{ if eq $state "STATUS_IN_PROGRESS" }}
+                {{ $period := .String "competitions.0.status.period" }}
+                <span style="font-size:0.85em;font-weight:500;">{{ if eq $period "1" }}1st{{ else if eq $period "2" }}2nd{{ else if eq $period "3" }}3rd{{ else if eq $period "4" }}4th{{ else }}OT{{ end }} {{ .String "competitions.0.status.displayClock" }}</span>
+              {{ else if eq $state "STATUS_SCHEDULED" }}
+                <span style="font-size:0.85em;">{{ .String "competitions.0.status.type.shortDetail" }}</span>
+              {{ else }}
+                <span style="font-size:0.85em;font-weight:500;">{{ .String "competitions.0.status.type.shortDetail" }}</span>
+              {{ end }}
+            </span>
+
+            {{ if .Exists "competitions.0.series" }}
+              <span style="font-size:0.7em;color:var(--glance-accent-color);margin-top:5px;">{{ .String "competitions.0.series.summary" }}</span>
             {{ end }}
           </span>
-
-          {{ if .Exists "competitions.0.series" }}
-            <span style="font-size:0.7em;color:var(--glance-accent-color);margin-top:5px;">{{ .String "competitions.0.series.summary" }}</span>
-          {{ end }}
-        </span>
+        {{ end }}
         <span style="display:flex;align-items:center;width:90px;">
-          <img src="{{ $home.String "team.logo" }}" alt="{{ $home.String "team.abbreviation" }}" style="width:24px;height:24px;margin-right:4px;"/>
+          {{ if $homeScheduleLink }}
+            <a href="{{ $homeScheduleLink }}" target="_blank" style="text-decoration:none;color:inherit;">
+              <img src="{{ if $home.String "team.logo" }}{{ $home.String "team.logo" }}{{ else }}https://a.espncdn.com/i/teamlogos/leagues/500/nfl.png{{ end }}" alt="{{ $home.String "team.abbreviation" }}" style="width:24px;height:24px;margin-right:4px;cursor:pointer;"/>
+            </a>
+          {{ else }}
+            <img src="{{ if $home.String "team.logo" }}{{ $home.String "team.logo" }}{{ else }}https://a.espncdn.com/i/teamlogos/leagues/500/nfl.png{{ end }}" alt="{{ $home.String "team.abbreviation" }}" style="width:24px;height:24px;margin-right:4px;"/>
+          {{ end }}
           <span style="display:flex;flex-direction:column;margin-right:0;">
             <span style="font-weight:bold;">{{ $home.String "team.abbreviation" }}</span>
             {{ if $homeRec }}<span style="font-size:0.7em;color:var(--glance-muted-text)">({{ $homeRec }})</span>{{ end }}
           </span>
-          {{ if ne $state "STATUS_SCHEDULED" }}<span style="margin-left:0;font-size:1.1em;font-weight:500;">{{ $home.String "score" }}</span>{{ end }}
+          {{ if ne $state "STATUS_SCHEDULED" }}<span style="margin-left:1em;font-size:1.1em;font-weight:500;">{{ $home.String "score" }}</span>{{ end }}
         </span>
       </li>
     {{ end }}

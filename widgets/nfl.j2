@@ -100,7 +100,47 @@
         {{ end }}
       {{ end }}
 
-      <li style="display:flex;align-items:center;white-space:nowrap;gap:12px;padding:6px 0;border-bottom:1px solid var(--glance-divider);cursor:default" {{ if ne $state "STATUS_SCHEDULED" }}title="{{ $away.String "team.abbreviation" }} Box:{{ range $j,$ls := $away.Array "linescores" }}{{ if eq $j 0 }} Q1: {{ else if eq $j 1 }} Q2: {{ else if eq $j 2 }} Q3: {{ else if eq $j 3 }} Q4: {{ else }} OT: {{ end }}{{ $ls.String "value" }}{{ end }}&#10;{{ $home.String "team.abbreviation" }} Box:{{ range $j,$ls := $home.Array "linescores" }}{{ if eq $j 0 }} Q1: {{ else if eq $j 1 }} Q2: {{ else if eq $j 2 }} Q3: {{ else if eq $j 3 }} Q4: {{ else }} OT: {{ end }}{{ $ls.String "value" }}{{ end }}"{{ end }}>
+      {{ $tooltip := "" }}
+      {{ if ne $state "STATUS_SCHEDULED" }}
+        {{ $awayBoxScore := "" }}
+        {{ range $j,$ls := $away.Array "linescores" }}
+          {{ if eq $j 0 }}{{ $awayBoxScore = printf "%s Q1: %s" $awayBoxScore ($ls.String "displayValue") }}
+          {{ else if eq $j 1 }}{{ $awayBoxScore = printf "%s Q2: %s" $awayBoxScore ($ls.String "displayValue") }}
+          {{ else if eq $j 2 }}{{ $awayBoxScore = printf "%s Q3: %s" $awayBoxScore ($ls.String "displayValue") }}
+          {{ else if eq $j 3 }}{{ $awayBoxScore = printf "%s Q4: %s" $awayBoxScore ($ls.String "displayValue") }}
+          {{ else }}{{ $awayBoxScore = printf "%s OT: %s" $awayBoxScore ($ls.String "displayValue") }}{{ end }}
+        {{ end }}
+        
+        {{ $homeBoxScore := "" }}
+        {{ range $j,$ls := $home.Array "linescores" }}
+          {{ if eq $j 0 }}{{ $homeBoxScore = printf "%s Q1: %s" $homeBoxScore ($ls.String "displayValue") }}
+          {{ else if eq $j 1 }}{{ $homeBoxScore = printf "%s Q2: %s" $homeBoxScore ($ls.String "displayValue") }}
+          {{ else if eq $j 2 }}{{ $homeBoxScore = printf "%s Q3: %s" $homeBoxScore ($ls.String "displayValue") }}
+          {{ else if eq $j 3 }}{{ $homeBoxScore = printf "%s Q4: %s" $homeBoxScore ($ls.String "displayValue") }}
+          {{ else }}{{ $homeBoxScore = printf "%s OT: %s" $homeBoxScore ($ls.String "displayValue") }}{{ end }}
+        {{ end }}
+
+        {{ $gameLeaders := "" }}
+        {{ range .Array "competitions.0.leaders" }}
+          {{ if eq (.String "name") "passingYards" }}
+            {{ range .Array "leaders" }}
+              {{ $gameLeaders = printf "%sPassing: %s (%s)\n" $gameLeaders (.String "athlete.shortName") (.String "displayValue") }}
+            {{ end }}
+          {{ else if eq (.String "name") "rushingYards" }}
+            {{ range .Array "leaders" }}
+              {{ $gameLeaders = printf "%sRushing: %s (%s)\n" $gameLeaders (.String "athlete.shortName") (.String "displayValue") }}
+            {{ end }}
+          {{ else if eq (.String "name") "receivingYards" }}
+            {{ range .Array "leaders" }}
+              {{ $gameLeaders = printf "%sReceiving: %s (%s)\n" $gameLeaders (.String "athlete.shortName") (.String "displayValue") }}
+            {{ end }}
+          {{ end }}
+        {{ end }}
+
+        {{ $tooltip = printf "%s Box:%s\n%s Box:%s\n\nGame Leaders:\n%s" ($away.String "team.abbreviation") $awayBoxScore ($home.String "team.abbreviation") $homeBoxScore $gameLeaders }}
+      {{ end }}
+
+      <li style="display:flex;align-items:center;white-space:nowrap;gap:12px;padding:6px 0;border-bottom:1px solid var(--glance-divider);cursor:default" {{ if ne $state "STATUS_SCHEDULED" }}title="{{ $tooltip }}"{{ end }}>
         <span style="display:flex;align-items:center;flex:1;justify-content:space-between;">
           {{ if $awayScheduleLink }}
             <a href="{{ $awayScheduleLink }}" target="_blank" style="text-decoration:none;color:inherit;display:flex;align-items:center;">

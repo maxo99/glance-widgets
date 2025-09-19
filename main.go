@@ -52,12 +52,17 @@ func main() {
 		fmt.Printf("Template execution failed: %v\n", err)
 		return
 	}
+	err = os.WriteFile("data/results/nba-widget.html", []byte(result.String()), 0644)
+	if err != nil {
+		fmt.Printf("Error writing result to file: %v\n", err)
+		return
+	}
 
 	fmt.Println(result.String())
 }
 
 func getTestData() (gjson.Result, error) {
-	jsonBytes, err := os.ReadFile("testdata/nba-response.json")
+	jsonBytes, err := os.ReadFile("data/mock/nba-response.json")
 	if err != nil {
 		return gjson.Result{}, fmt.Errorf("reading test data: %w", err)
 	}
@@ -84,7 +89,7 @@ func getAPIData() (gjson.Result, error) {
 	}
 
 	// Save the raw JSON response to file for inspection
-	err = os.WriteFile("api-response.json", jsonBytes, 0644)
+	err = os.WriteFile("data/responses/nba-response.json", jsonBytes, 0644)
 	if err != nil {
 		return gjson.Result{}, fmt.Errorf("saving json response: %w", err)
 	}

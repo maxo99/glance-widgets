@@ -2,7 +2,7 @@
     {{ if eq (len $events) 0 }}
       <div>No games scheduled today.</div>
     {{ else }}
-      {{ $wid := printf "nba-%d" now.UnixNano }}
+      {{ $wid := printf "nfl-%d" now.UnixNano }}
       <div id="{{ $wid }}" style="position:relative;padding-bottom:{{ if gt (len $events) 6 }}25px{{ else }}0px{{ end }};">
         <input type="checkbox" id="{{ $wid }}-cb" style="display:none"/>
         <ul class="visible" style="list-style:none;padding:0;margin:0;">
@@ -10,21 +10,21 @@
         
           {{ range $i, $g := $events }}
             {{ if and (lt $count 6) (eq ($g.String "competitions.0.status.type.name") "STATUS_IN_PROGRESS") }}
-              {{ template "nba-game" $g }}
+              {{ template "nfl-game" $g }}
               {{ $count = add $count 1 }}
             {{ end }}
           {{ end }}
         
           {{ range $i, $g := $events }}
             {{ if and (lt $count 6) (eq ($g.String "competitions.0.status.type.name") "STATUS_SCHEDULED") }}
-              {{ template "nba-game" $g }}
+              {{ template "nfl-game" $g }}
               {{ $count = add $count 1 }}
             {{ end }}
           {{ end }}
         
           {{ range $i, $g := $events }}
             {{ if and (lt $count 6) (not (or (eq ($g.String "competitions.0.status.type.name") "STATUS_IN_PROGRESS") (eq ($g.String "competitions.0.status.type.name") "STATUS_SCHEDULED"))) }}
-              {{ template "nba-game" $g }}
+              {{ template "nfl-game" $g }}
               {{ $count = add $count 1 }}
             {{ end }}
           {{ end }}
@@ -33,19 +33,19 @@
         <ul class="all" style="list-style:none;padding:0;margin:0;display:none">
           {{ range $i, $g := $events }}
             {{ if eq ($g.String "competitions.0.status.type.name") "STATUS_IN_PROGRESS" }}
-              {{ template "nba-game" $g }}
+              {{ template "nfl-game" $g }}
             {{ end }}
           {{ end }}
         
           {{ range $i, $g := $events }}
             {{ if eq ($g.String "competitions.0.status.type.name") "STATUS_SCHEDULED" }}
-              {{ template "nba-game" $g }}
+              {{ template "nfl-game" $g }}
             {{ end }}
           {{ end }}
         
           {{ range $i, $g := $events }}
             {{ if not (or (eq ($g.String "competitions.0.status.type.name") "STATUS_IN_PROGRESS") (eq ($g.String "competitions.0.status.type.name") "STATUS_SCHEDULED")) }}
-              {{ template "nba-game" $g }}
+              {{ template "nfl-game" $g }}
             {{ end }}
           {{ end }}
         </ul>
@@ -64,7 +64,7 @@
       </div>
     {{ end }}
   
-    {{ define "nba-game" }}
+    {{ define "nfl-game" }}
       {{ $state := .String "competitions.0.status.type.name" }}
       {{ $away := index (.Array "competitions.0.competitors") 0 }}
       {{ $home := index (.Array "competitions.0.competitors") 1 }}

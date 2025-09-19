@@ -14,17 +14,18 @@ import (
 
 // var sourceType = "test-data"
 var sourceType = "api"
+var widgetType = "nfl"
 
 func main() {
-
 	// Load widget from file
-	templateBytes, err := os.ReadFile("widgets/nba.tmpl")
+	templatePath := fmt.Sprintf("widgets/%s.j2", widgetType)
+	templateBytes, err := os.ReadFile(templatePath)
 	if err != nil {
 		fmt.Printf("Error reading template: %v\n", err)
 		return
 	}
 
-	tmpl, err := template.New("nba").Funcs(glance.GetTemplateFunctions()).Parse(string(templateBytes))
+	tmpl, err := template.New(widgetType).Funcs(glance.GetTemplateFunctions()).Parse(string(templateBytes))
 	if err != nil {
 		fmt.Printf("Error parsing template: %v\n", err)
 		return
@@ -32,9 +33,9 @@ func main() {
 
 	var jsonResult gjson.Result
 	if sourceType == "api" {
-		jsonResult, err = getAPIData()
+		jsonResult, err = getAPIData(widgetType)
 	} else {
-		jsonResult, err = getTestData()
+		jsonResult, err = getTestData(widgetType)
 	}
 	if err != nil {
 		fmt.Printf("Error getting JSON data: %v\n", err)
@@ -52,7 +53,9 @@ func main() {
 		fmt.Printf("Template execution failed: %v\n", err)
 		return
 	}
-	err = os.WriteFile("data/results/nba-widget.html", []byte(result.String()), 0644)
+
+	resultPath := fmt.Sprintf("data/results/%s-widget.html", widgetType)
+	err = os.WriteFile(resultPath, []byte(result.String()), 0644)
 	if err != nil {
 		fmt.Printf("Error writing result to file: %v\n", err)
 		return
@@ -61,21 +64,32 @@ func main() {
 	fmt.Println(result.String())
 }
 
-func getTestData() (gjson.Result, error) {
-	jsonBytes, err := os.ReadFile("data/mock/nba-response.json")
+func getTestData(widgetType string) (gjson.Result, error) {
+	filePath := fmt.Sprintf("data/responses/%s-response.json", widgetType)
+	jsonBytes, err := os.ReadFile(filePath)
 	if err != nil {
 		return gjson.Result{}, fmt.Errorf("reading test data: %w", err)
 	}
 	return gjson.Parse(string(jsonBytes)), nil
 }
 
-func getAPIData() (gjson.Result, error) {
-	// Fetch NBA API data
-	apiURL := "https://site.api.espn.com/apis/site/v2/sports/basketball/nba/scoreboard"
+func getAPIData(widgetType string) (gjson.Result, error) {
+	var apiURL string
+	var sport string
+	switch widgetType {
+	case "nba":
+		sport = "basketball"
+		apiURL = fmt.Sprintf("https://site.api.espn.com/apis/site/v2/sports/%s/nba/scoreboard", sport)
+	case "nfl":
+		sport = "football"
+		apiURL = fmt.Sprintf("https://site.api.espn.com/apis/site/v2/sports/%s/nfl/scoreboard", sport)
+	default:
+		return gjson.Result{}, fmt.Errorf("unsupported widget type: %s", widgetType)
+	}
 
 	resp, err := http.Get(apiURL)
 	if err != nil {
-		return gjson.Result{}, fmt.Errorf("fetching NBA data: %w", err)
+		return gjson.Result{}, fmt.Errorf("fetching %s data: %w", widgetType, err)
 	}
 	defer resp.Body.Close()
 
@@ -89,11 +103,11 @@ func getAPIData() (gjson.Result, error) {
 	}
 
 	// Save the raw JSON response to file for inspection
-	err = os.WriteFile("data/responses/nba-response.json", jsonBytes, 0644)
+	responsePath := fmt.Sprintf("data/responses/%s-response.json", widgetType)
+	err = os.WriteFile(responsePath, jsonBytes, 0644)
 	if err != nil {
 		return gjson.Result{}, fmt.Errorf("saving json response: %w", err)
 	}
 
 	return gjson.Parse(string(jsonBytes)), nil
-
 }

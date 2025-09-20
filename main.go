@@ -14,7 +14,7 @@ import (
 
 // var sourceType = "test-data"
 var sourceType = "api"
-var widgetType = "nfl"
+var widgetType = "cfb" // nba, nfl, cfb
 
 func main() {
 	// Load widget from file
@@ -75,14 +75,13 @@ func getTestData(widgetType string) (gjson.Result, error) {
 
 func getAPIData(widgetType string) (gjson.Result, error) {
 	var apiURL string
-	var sport string
 	switch widgetType {
 	case "nba":
-		sport = "basketball"
-		apiURL = fmt.Sprintf("https://site.api.espn.com/apis/site/v2/sports/%s/nba/scoreboard", sport)
+		apiURL = "https://site.api.espn.com/apis/site/v2/sports/basketball/nba/scoreboard"
 	case "nfl":
-		sport = "football"
-		apiURL = fmt.Sprintf("https://site.api.espn.com/apis/site/v2/sports/%s/nfl/scoreboard", sport)
+		apiURL = "https://site.api.espn.com/apis/site/v2/sports/football/nfl/scoreboard"
+	case "cfb":
+		apiURL = "https://site.api.espn.com/apis/site/v2/sports/football/college-football/scoreboard"
 	default:
 		return gjson.Result{}, fmt.Errorf("unsupported widget type: %s", widgetType)
 	}
